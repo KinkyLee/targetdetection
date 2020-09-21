@@ -1,4 +1,4 @@
-﻿package com.sds.targetdetection;
+﻿//package com.sds.targetdetection;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -9,24 +9,19 @@ import java.nio.channels.FileChannel.MapMode;
 import static java.lang.Math.sqrt;
 
 class TargetDetection {
-    /**默认分割门限*/
     static final float DEFAULT_THRESHOLD = 10.0f;
-    /**默认面积判定值*/
     static final int DEFAULT_REGION = 10;
 
-    /**分割门限*/
     private float mThreshold;
-    /**面积判定值*/
     float mRegion;
     int widthNarrowedDown;
     int heightNarrowedDown;
 
-    /*目标节点信息，可以存放特征向量（聚类结果）、目标链*/
     class TargetNode implements Cloneable{
-        int iRegion;				/*目标面积*/
-        int iLuminance;				/*目标平均灰度*/
-        double fPositionY;			/*目标灰度质心(行坐标)*/
-        double fPositionX;			/*目标灰度质心(列坐标)*/
+        int iRegion;
+        int iLuminance;
+        double fPositionY;
+        double fPositionX;
 
         @Override
         protected TargetNode clone() throws CloneNotSupportedException  {
@@ -34,19 +29,12 @@ class TargetDetection {
         }
     }
 
-    /**宽度上的缩小范围*/
     final static int DEFAULT_WIDTH_NARROWED_DOWN = 400;
-    /**高度上的缩小范围*/
     final static int DEFAULT_HEIGHT_NARROWED_DOWN = 300;
-    /**特征向量数量*/
     public final static int CAPACITY_SIZE = 500;
-    /**特征向量个数*/
     int mTargetNum;
-    /**提取的特征向量集*/
     TargetNode[] mEigenList;
-    /**图像宽度*/
     int width;
-    /**图像高度*/
     int height;
     
     TargetDetection(int width, int height, float _threshold, int _region, int _widthNarrowedDown, int _heightNarrowedDown) {
@@ -60,7 +48,6 @@ class TargetDetection {
 
     private void labelingCluster(int[] iData, int height, int width)
     {
-        //聚类标记矩阵
         int[][] Flag = new int[2][width];
 
         int i,j,k;
@@ -88,19 +75,19 @@ class TargetDetection {
                 label2 = 0;
                 if (iData[i*width+j] > 0)
                 {
-                    if ( (i-1) >= 0 && (j-1) >= 0 && iData[(i-1)*width+j-1] > 0 )//左上邻域
+                    if ( (i-1) >= 0 && (j-1) >= 0 && iData[(i-1)*width+j-1] > 0 )
                         label1 = Flag[0][j-1];
 
-                    if ( (i-1) >= 0 && iData[(i-1)*width+j] > 0)//上中邻域
+                    if ( (i-1) >= 0 && iData[(i-1)*width+j] > 0)
                         label1 = Flag[0][j];
 
-                    if ( (i-1) >= 0 && (j+1) < width && iData[(i-1)*width+j+1] > 0)//右上邻域
+                    if ( (i-1) >= 0 && (j+1) < width && iData[(i-1)*width+j+1] > 0)
                         label2 = Flag[0][j+1];
 
-                    if ( (j-1) >= 0 && iData[i*width+j-1] > 0)//*左邻域*
+                    if ( (j-1) >= 0 && iData[i*width+j-1] > 0)
                         label1 = Flag[1][j-1];
 
-                    if ( label1== 0 && label2 == 0 )  //*新类*
+                    if ( label1== 0 && label2 == 0 )
                     {
                         if((mTargetNum > 499)||(ClusterNum > 499))
                             break;
@@ -120,7 +107,7 @@ class TargetDetection {
                         continue;
                     }
 
-                    if (label1 > 0 && label2 >0 && label1 != label2) //有两个聚类相邻
+                    if (label1 > 0 && label2 >0 && label1 != label2)
                     {
                         Flag[1][j] = label1;
                         if(i > 0)
@@ -137,8 +124,8 @@ class TargetDetection {
                         pNodelabel2 = mEigenList[label2-1];
 
 
-                        LocalPointXSum = (j) * iData[i*width+j];// m by zhaoyan
-                        LocalPointYSum = (i) * iData[i*width+j];//m by zy
+                        LocalPointXSum = (j) * iData[i*width+j];
+                        LocalPointYSum = (i) * iData[i*width+j];
 
                         pNodelabel1.fPositionX = pNodelabel2.fPositionX + pNodelabel1.fPositionX + LocalPointXSum;
                         pNodelabel1.fPositionY = pNodelabel2.fPositionY + pNodelabel1.fPositionY + LocalPointYSum;
@@ -206,10 +193,6 @@ class TargetDetection {
         }
     }
 
-    /**
-     * 求图像的标准差
-     * @return 图像的标准差
-     * */
     private float std2(int[] iData, int height, int width, double pixMeanValue)
     {
         int i,j;
@@ -222,10 +205,6 @@ class TargetDetection {
 	    return (float)sqrt(pixValueSum/(double)(width*height));
     }
 
-    /**
-     * 求图像的均值
-     * @return 图像的均值
-     * */
     private float mean2(int[] iData, int height, int width)
     {
         int i,j;
@@ -238,12 +217,8 @@ class TargetDetection {
         return (float) (pixValueSum / (double)(width * height));
     }
 
-    /**
-     * 开窗
-     * */
     private void open_window(int[] iData, int height, int width, int[] oData)
     {
-        //求图像的均值
         int wndsize_h = height - heightNarrowedDown;
         int wndsize_w = width - widthNarrowedDown;
 
@@ -254,9 +229,6 @@ class TargetDetection {
         }
     }
 
-    /**
-     * 图像分割
-     * */
     private void separate(int[] iData, int[] oResult, int height, int width, double threshold)
     {
         for(int i = 0; i < height; i++) {
@@ -266,12 +238,6 @@ class TargetDetection {
         }
     }
     
-    /**
-     * 读取文件
-     * @param filename
-     * @return
-     * @throws IOException
-     */
     @SuppressWarnings("resource")
 	public int[] filetoByteArray(String filename) throws IOException {
     	 
@@ -305,10 +271,6 @@ class TargetDetection {
         }
     }
 
-    /**
-     * 目标检测
-     * @throws IOException 
-     */
     void targetDetect(String fileName) throws IOException
     {
         mEigenList = new TargetNode[CAPACITY_SIZE];
@@ -317,8 +279,8 @@ class TargetDetection {
         }
         mTargetNum = 0;      
 
-        int w = this.width;			//获取位图的宽
-        int h = this.height;		//获取位图的高
+        int w = this.width;
+        int h = this.height;
 
         int[] curImage = filetoByteArray(fileName);
         
@@ -331,11 +293,11 @@ class TargetDetection {
         float pixMeanValue;
         float pixSigmaValue;
 
-        //目标分割
+
         pixMeanValue = mean2(w_image,wndsize_h,wndsize_w);
         pixSigmaValue = std2(w_image,wndsize_h,wndsize_w, pixMeanValue);
 
-        float threshold = pixMeanValue + mThreshold * pixSigmaValue;  //分割门限
+        float threshold = pixMeanValue + mThreshold * pixSigmaValue;
 
         separate(w_image, w_image, wndsize_h, wndsize_w, threshold);
 

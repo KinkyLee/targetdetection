@@ -1,4 +1,4 @@
-﻿package com.sds.targetdetection;
+﻿//package com.sds.targetdetection;
 
 import java.sql.*;
 
